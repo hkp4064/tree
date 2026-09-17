@@ -96,7 +96,7 @@ void emit_tree(char **dirname, bool needfulltree)
     lc.printinfo(dirname[i], info, 0);
 
     needsclosed = lc.printfile(dirname[i], dirname[i], info, (dir != NULL) || (!dir && n));
-    subtotal = (struct totals){0, 0, 0};
+    subtotal = (struct totals){0, 0, 0, 0};
 
     if (!dir && n) {
       lc.error("error opening dir");
@@ -123,6 +123,7 @@ void emit_tree(char **dirname, bool needfulltree)
 
     tot.files += subtotal.files;
     tot.dirs += subtotal.dirs;
+    if (subtotal.max_depth > tot.max_depth) tot.max_depth = subtotal.max_depth;
     // Do not bother to accumulate tot.size in listdir.
     // This is already done in getfulltree()
     if (flag.du) tot.size += info? info->size : 0;
@@ -163,6 +164,7 @@ struct totals listdir(char *dirname, struct _info **dir, int lev, dev_t dev, boo
   path = xmalloc(sizeof(char) * pathlen);
 
   for (;*dir != NULL; dir++) {
+    if ((size_t)lev > tot.max_depth) tot.max_depth = (size_t)lev;
     lc.printinfo(dirname, *dir, lev);
 
     namelen = strlen((*dir)->name) + 1;
@@ -264,6 +266,7 @@ struct totals listdir(char *dirname, struct _info **dir, int lev, dev_t dev, boo
       subtotal = listdir(newpath, subdir, lev+1, dev, hasfulltree);
       tot.dirs += subtotal.dirs;
       tot.files += subtotal.files;
+      if (subtotal.max_depth > tot.max_depth) tot.max_depth = subtotal.max_depth;
     } else if (!needsclosed) lc.newline(*dir, lev, 0, *(dir+1)!=NULL);
 
     if (subdir) {

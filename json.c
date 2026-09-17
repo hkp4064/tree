@@ -194,5 +194,6 @@ void json_report(struct totals tot)
   if (flag.du) fprintf(outfile,",\"size\":%lld", (long long int)tot.size);
   fprintf(outfile,",\"directories\":%ld", tot.dirs);
   if (!flag.d) fprintf(outfile,",\"files\":%ld", tot.files);
+  if (flag.stat) fprintf(outfile,",\"maximum_depth\":%zu", tot.max_depth);
   fprintf(outfile, "}");
 }

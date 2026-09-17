@@ -181,5 +181,8 @@ void xml_report(struct totals tot)
   if (!flag.d) {
     xml_indent(1); fprintf(outfile,"<files>%ld</files>%s", tot.files, _nl);
   }
+  if (flag.stat) {
+    xml_indent(1); fprintf(outfile,"<maximum_depth>%zu</maximum_depth>%s", tot.max_depth, _nl);
+  }
   xml_indent(0); fprintf(outfile,"</report>%s", _nl);
 }

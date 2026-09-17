@@ -410,6 +410,16 @@ int main(int argc, char **argv)
 	      flag.s = flag.du = (opt_toggle? !flag.du : true);
 	      break;
 	    }
+	    if (!strcmp("--size",argv[i])) {
+	      j = strlen(argv[i])-1;
+	      flag.s = flag.du = (opt_toggle? !flag.du : true);
+	      break;
+	    }
+	    if (!strcmp("--stat",argv[i])) {
+	      j = strlen(argv[i])-1;
+	      flag.stat = (opt_toggle? !flag.stat : true);
+	      break;
+	    }
 	    if (!strcmp("--prune",argv[i])) {
 	      j = strlen(argv[i])-1;
 	      flag.prune = (opt_toggle? !flag.prune : true);
@@ -704,7 +714,9 @@ void usage(int n)
 	"  \b--noreport\r    Turn off file/directory count at end of tree listing.\n"
 	"  \b--charset\r \fX\r   Use charset \fX\r for terminal/HTML and indentation line output.\n"
 	"  \b--filelimit\r \f#\r Do not descend dirs with more than \f#\r files in them.\n"
-        "  \b--condense\r    Condense directory singletons to a single line of output.\n"
+	"  \b--condense\r    Condense directory singletons to a single line of output.\n"
+	"  \b--size\r        Print item sizes and accumulated directory sizes.\n"
+	"  \b--stat\r        Print directory, file, and maximum-depth statistics.\n"
 	"  \b-o\r \ffilename\r   Output to file instead of stdout.\n"
 	"  \b------- File options -------\r\n"
 	"  \b-q\r            Print non-printable characters as '\b?\r'.\n"

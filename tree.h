@@ -91,7 +91,7 @@ struct Flags {
   // TODO: Change these single letter flags to more meaningful names
   bool a, c, d, f, g, h, l, p, q, s, u;
   bool D, F, H, J, N, Q, R, X;
-  bool inode, dev, si, du, prune, hyper;
+  bool inode, dev, si, du, stat, prune, hyper;
   bool noindent, force_color, nocolor, xdev, noreport, nolinks;
   bool ignorecase, matchdirs, fromfile, metafirst, gitignore, showinfo;
   bool reverse, fflinks, htmloffset, acl, selinux, condense_singletons;
@@ -172,6 +172,7 @@ struct infofile {
 /* list.c */
 struct totals {
   size_t files, dirs;
+  size_t max_depth;
   off_t size;
 };
 
