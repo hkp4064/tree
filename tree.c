@@ -35,6 +35,7 @@ char *host = NULL, *title = "Directory Tree", *sp = " ", *_nl = "\n";
 char *Hintro = NULL, *Houtro = NULL, *scheme = "file://", *authority = NULL;
 char *file_comment = "#", *file_pathsep = "/";
 char *timefmt = NULL;
+char *extension_filter = NULL;
 const char *charset = NULL;
 
 struct _info **(*getfulltree)(char *d, u_long lev, dev_t dev, off_t *size, char **err) = unix_getfulltree;
@@ -111,6 +112,15 @@ char *long_arg(char *argv[], size_t i, size_t *j, size_t *n, char *prefix) {
     }
   }
   return ret;
+}
+
+static bool extension_matches(const char *name) {
+  size_t name_len, extension_len;
+  if (extension_filter == NULL) return true;
+  name_len = strlen(name);
+  extension_len = strlen(extension_filter);
+  return name_len > extension_len+1 && name[name_len-extension_len-1] == '.' && 
+    strcmp(name+name_len-extension_len,extension_filter) == 0;
 }
 
 int main(int argc, char **argv)
@@ -382,6 +392,15 @@ int main(int argc, char **argv)
 	      flag.nolinks = (opt_toggle? !flag.nolinks : true);
 	      break;
 	    }
+      if ((arg = long_arg(argv, i, &j, &n, "--filter"))!=NULL) {
+        while (*arg == ".") arg++;
+        if (*arg == "\0") {
+          fprintf(stderr, "tree: Filter extension cannot be empty.\n");
+          exit(EXIT_FAILURE);
+        }
+        extension_filter = arg;
+        break;
+      }
 	    if (!strcmp("--dirsfirst",argv[i])) {
 	      j = strlen(argv[i])-1;
 	      topsort = dirsfirst;
@@ -629,7 +648,7 @@ int main(int argc, char **argv)
     push_infostack(new_infofile(INFO_PATH, false));
   }
 
-  needfulltree = flag.du || flag.prune || flag.matchdirs || flag.fromfile || flag.condense_singletons;
+  needfulltree = flag.du || flag.prune || flag.matchdirs || flag.fromfile || flag.condense_singletons || extension_filter != NULL;
 
   emit_tree(dirname, needfulltree);
 
@@ -676,7 +695,7 @@ void usage(int n)
 
   fancy(n < 2? stderr: stdout,
 	"usage: \btree\r [\b-acdfghilnpqrstuvxACDFJQNSUX\r] [\b-L\r \flevel\r [\b-R\r]] [\b-H\r [-]\fbaseHREF\r]\n"
-	"\t[\b-T\r \ftitle\r] [\b-o\r \ffilename\r] [\b-P\r \fpattern\r] [\b-I\r \fpattern\r] [\b--gitignore\r]\n"
+	"\t[\b-T\r \ftitle\r] [\b-o\r \ffilename\r] [\b-P\r \fpattern\r] [\b-I\r \fpattern\r] [\b--filter\r \fextension\r] [\b--gitignore\r]\n"
 	"\t[\b--gitfile\r[\b=\r]\ffile\r] [\b--matchdirs\r] [\b--metafirst\r] [\b--ignore-case\r]\n"
 	"\t[\b--nolinks\r] [\b--hintro\r[\b=\r]\ffile\r] [\b--houtro\r[\b=\r]\ffile\r] [\b--inodes\r] [\b--device\r]\n"
 	"\t[\b--sort\r[\b=\r]\fname\r] [\b--dirsfirst\r] [\b--filesfirst\r] [\b--filelimit\r[\b=\r]\f#\r] [\b--si\r]\n"
@@ -703,6 +722,7 @@ void usage(int n)
 	"  \b-R\r            Rerun tree when max dir level reached.\n"
 	"  \b-P\r \fpattern\r    List only those files that match the pattern given.\n"
 	"  \b-I\r \fpattern\r    Do not list files that match the given pattern.\n"
+  "  \b--filter\r \fX\rList only files with extension \fX\r; empty directories are hidden.\n"
 	"  \b--gitignore\r   Filter by using \b.gitignore\r files.\n"
 	"  \b--gitfile\r \fX\r   Explicitly read a gitignore file.\n"
 	"  \b--ignore-case\r Ignore case when pattern matching.\n"
@@ -887,6 +907,8 @@ struct _info *getinfo(const char *name, char *path)
   }
   if (ipattern && (patignore(name, isdir, false) || patignore(path, isdir, true))) return NULL;
 #endif
+
+  if (!isdir && !extension_matches(name)) return NULL;
 
   if (flag.d && ((st.st_mode & S_IFMT) != S_IFDIR)) return NULL;
 
@@ -1144,7 +1166,7 @@ struct _info **unix_getfulltree(char *d, u_long lev, dev_t dev, off_t *size, cha
         }
       }
       /* prune empty folders, unless they match the requested pattern */
-      if (flag.prune && (*dir)->child == NULL &&
+      if ((flag.prune || extension_filter != NULL) && (*dir)->child == NULL &&
 	  !(flag.matchdirs && pattern && patinclude((*dir)->name, (*dir)->isdir, false))) {
 	xp = *dir;
 	for(p=dir;*p;p++) *p = *(p+1);
